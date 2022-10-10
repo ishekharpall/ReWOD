@@ -1,104 +1,144 @@
 # ReWOD
+package com.cts.authorization.model;
 
-package com.cts.authorization.controller;
+import java.io.Serializable;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import lombok.Getter;
+import lombok.Setter;
 
-import com.cts.authorization.config.JwtTokenUtil;
-import com.cts.authorization.exception.AuthorizationException;
-import com.cts.authorization.model.JwtRequest;
-import com.cts.authorization.model.JwtResponse;
-import com.cts.authorization.service.JwtUserDetailsService;
+@Getter @Setter
+public class JwtRequest implements Serializable {
 
-import io.jsonwebtoken.ExpiredJwtException;
-
-@RestController @Slf4j
-@CrossOrigin(origins = "*", allowedHeaders = "*")
-public class JwtAuthenticationController {
-
-	@Autowired
-	private AuthenticationManager authenticationManager;
-
-	@Autowired
-	private JwtTokenUtil jwtTokenUtil;
-
-	@Autowired
-	private JwtUserDetailsService userDetailsService;
-
-	/**
-	 * @param authenticationRequest
-	 * @return
-	 * @throws AuthorizationException
-	 * @throws Exception
-	 */
-	@PostMapping(value = "/authenticate")
-	public String createAuthenticationToken(@RequestBody JwtRequest authenticationRequest)
-			throws AuthorizationException {
-		Authentication auth=authenticate(authenticationRequest.getUserName(), authenticationRequest.getPassword());
-		final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUserName());
-		log.info("User Details ===== "+userDetails);
-		final String token = jwtTokenUtil.generateToken(userDetails);
-		return token;
-	}
-
-	private Authentication  authenticate(String userName, String password) throws AuthorizationException {
-		try {
-			log.info("=========Inside authenticate Method===========");
-			Authentication auth=authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userName, password));
-			log.info(".........Authentication Successful.....");
-			log.info("=========="+auth.getCredentials()+"==========");
-			return auth;
-			
-		} catch (DisabledException e) {
-			throw new AuthorizationException("USER_DISABLED");
-		} catch (BadCredentialsException e) {
-			e.printStackTrace();
-			throw new AuthorizationException("INVALID_CREDENTIALS");
-		}
+	private static final long serialVersionUID = 5926468583005150707L;
+	
+	private String userName;
+	private String password;
+	
+	public JwtRequest()
+	{
 		
 	}
 
-	/**
-	 * @param requestTokenHeader
-	 * @return
-	 */
-	@PostMapping(value = "/authorize")
-	public boolean authorizeTheRequest(
-			@RequestHeader(value = "Authorization", required = true) String requestTokenHeader) {
-		log.info("Inside authorize =============="+requestTokenHeader);
-		String jwtToken = null;
-		String userName = null;
-		if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-			jwtToken = requestTokenHeader.substring(7);
-			log.info("JWT Token ======================="+jwtToken);
-			try {
-				userName = jwtTokenUtil.getUsernameFromToken(jwtToken);
-			} catch (IllegalArgumentException | ExpiredJwtException e) {
-				return false;
-			}
-		}
-		return userName != null;
+	public JwtRequest(String userName, String password) {
+		this.setUserName(userName);
+		this.setPassword(password);
+	}
+}
 
+
+
+
+package com.cts.authorization.model;
+
+import java.io.Serializable;
+
+public class JwtResponse implements Serializable {
+
+	private static final long serialVersionUID = -8091879091924046844L;
+	private final String jwttoken;
+
+	public JwtResponse(String jwttoken) {
+		this.jwttoken = jwttoken;
 	}
 
-	@GetMapping("/getUserId/{jwtToken}")
-	public long getUserId(@PathVariable String jwtToken){
-		return userDetailsService.getUserId(jwtTokenUtil.getUsernameFromToken(jwtToken.substring(7)));
+	public String getToken() {
+		return this.jwttoken;
+	}
+}
+
+
+
+
+package com.cts.authorization.model;
+
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+public class MyUserDetails implements UserDetails {
+
+	private User user;
+	private long id;
+
+	public MyUserDetails(User user) {
+		this.user=user;
+		this.id=user.getId();
+	}
+	public long getId(){
+		return user.getId();
+	}
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		
+		return Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
 	}
 
-	@GetMapping("/health-check")
-	public ResponseEntity<String> healthCheck() {
-		return new ResponseEntity<>("auth-Ok", HttpStatus.OK);
+	@Override
+	public String getPassword() {
+		
+		return user.getPassword();
 	}
 
+	@Override
+	public String getUsername() {
+		
+		return user.getUserName();
+	}
+
+	@Override
+	public boolean isAccountNonExpired() {
+		
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		
+		return true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		
+		return true;
+	}
+
+}
+
+
+
+package com.cts.authorization.model;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Entity
+@Table(name = "users")
+public class User {
+	
+	@Id
+	@GeneratedValue
+	private int id;
+	
+	private String userName;
+	
+	private String password;
+	
 }
