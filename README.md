@@ -151,3 +151,6 @@ public class User {
               "./node_modules/sweetalert2/src/sweetalert2.scss"
             ],
             "scripts": ["./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"]
+	    
+	    
+	    "./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
