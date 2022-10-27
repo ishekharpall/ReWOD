@@ -142,3 +142,12 @@ public class User {
 	private String password;
 	
 }
+
+"styles": [
+              "./node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "./node_modules/font-awesome/css/font-awesome.min.css",
+              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
+              "src/styles.css",
+              "./node_modules/sweetalert2/src/sweetalert2.scss"
+            ],
+            "scripts": ["./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"]
